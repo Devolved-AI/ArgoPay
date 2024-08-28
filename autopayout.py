@@ -24,7 +24,7 @@ config = {
 }
 
 # Configure logging
-logging.basicConfig(filename="autopayout.log", level=logging.INFO)
+# logging.basicConfig(filename="autopayout.log", level=logging.INFO)
 
 def load_account_json(filepath):
     try:
@@ -83,15 +83,29 @@ def main():
         sys.exit(1)
 
     print(f"Account {address} available balance is {available_balance}")
-
     logging.info(f"Account {address} available balance is {available_balance}")
 
     active_era = substrate.query('Staking', 'ActiveEra')['index']
     logging.info(f"Active era is {active_era}")
 
     for validator in config["validators"]:
-        claimed_rewards = substrate.query('Staking', 'Stakers', [validator])['claimed_rewards']
-        logging.info(f"Claimed eras for validator {validator}: {claimed_rewards}")
+        # Attempt to retrieve staking info for the validator
+        staking_info = substrate.query('Staking', 'Validators', [validator])
+        print(f"Staking info for validator {validator}: {staking_info}")
+        
+        # Print the type and structure of staking_info for inspection
+        print(f"Type of staking_info: {type(staking_info)}")
+        print(f"Staking info details: {staking_info}")
+        logging.info(f"Staking info for validator {validator}: {staking_info}")
+
+        # Check if 'claimed_rewards' key exists in the staking info
+        if 'claimed_rewards' in staking_info:
+            claimed_rewards = staking_info['claimed_rewards']
+            logging.info(f"Claimed eras for validator {validator}: {claimed_rewards}")
+        else:
+            print(f"'claimed_rewards' key not found in staking_info. Available details: {staking_info}")
+            logging.info(f"'claimed_rewards' key not found in staking_info. Available details: {staking_info}")
+            continue  # Skip to the next validator if 'claimed_rewards' is not found
 
         transactions = []
 
